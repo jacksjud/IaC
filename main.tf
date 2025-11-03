@@ -238,10 +238,10 @@ resource "aws_security_group_rule" "allow_http_inbound_from_elb" {
     to_port           = 8080
     protocol          = "tcp"
 
-    # Only allow trafficcoming from the ELB's security group
-    # source_security_group_id = aws_security_group.elb.id
+    # Only allow traffic coming from the ELB's security group
+    source_security_group_id = aws_security_group.elb.id
     # DEBUGGING
-    cidr_blocks = [ "0.0.0.0/0" ]
+    # cidr_blocks = [ "0.0.0.0/0" ]
 }
 
 # Allow SSH from my IP (debugging only)
