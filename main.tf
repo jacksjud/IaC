@@ -139,10 +139,20 @@ resource "aws_instance" "instance_1" {
     }
 
     security_groups = [ aws_security_group.instances.name ]
+
+
+    # To more easily SSH or EC2 Connect
+    associate_public_ip_address = true
+
+    # Updated user_data because the Amazon Linux 2 uses bash that runs user_data once
+    # so if it fails for any reason (like not having Python), no service is listening
     user_data = <<-EOF
                 #!/bin/bash
+                yum update -y
+                yum install -y python3
+                cd /home/ec2-user
                 echo "Hello, World 1" > index.html
-                python3 -m http.server 8080 &
+                nohup python3 -m http.server 8080 &
                 EOF
 
 
@@ -158,12 +168,19 @@ resource "aws_instance" "instance_2" {
 
     security_groups = [ aws_security_group.instances.name ]
 
+    # To more easily SSH or EC2 Connect
+    associate_public_ip_address = true
+
+    # Updated user_data because the Amazon Linux 2 uses bash that runs user_data once
+    # so if it fails for any reason (like not having Python), no service is listening
     user_data = <<-EOF
                 #!/bin/bash
+                yum update -y
+                yum install -y python3
+                cd /home/ec2-user
                 echo "Hello, World 2" > index.html
-                python3 -m http.server 8080 &
+                nohup python3 -m http.server 8080 &
                 EOF
-
 }
 
 # Data block, used to query for the most recent official amazon linux 2 ami
@@ -209,17 +226,41 @@ data "aws_subnets" "default_subnet" {
 # Security group for instances
 resource "aws_security_group" "instances" {
   name        = "instance-security-group-0"
-  description = "Security group for app instances"
+  description = "Allow ELB and SSH access"
   vpc_id      = data.aws_vpc.default_vpc.id
 }
 
-resource "aws_security_group_rule" "allow_http_inbound" {
-  type              = "ingress"
-  security_group_id = aws_security_group.instances.id
-  from_port         = 8080
-  to_port           = 8080
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
+# Allow HTTP (app traffic) from ELB only
+resource "aws_security_group_rule" "allow_http_inbound_from_elb" {
+    type              = "ingress"
+    security_group_id = aws_security_group.instances.id
+    from_port         = 8080
+    to_port           = 8080
+    protocol          = "tcp"
+
+    # Only allow trafficcoming from the ELB's security group
+    # source_security_group_id = aws_security_group.elb.id
+    # DEBUGGING
+    cidr_blocks = [ "0.0.0.0/0" ]
+}
+
+# Allow SSH from my IP (debugging only)
+resource "aws_security_group_rule" "allow_ssh_inbound" {
+    type = "ingress"
+    security_group_id = aws_security_group.instances.id
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+}
+
+# Allow all outbound (so. the instance can talk to the internet)
+resource "aws_security_group_rule" "allow_all_outbound" {
+    type = "egress"
+    security_group_id = aws_security_group.instances.id
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = [ "0.0.0.0/0" ]
 }
 
 # Security group for Classic Load Balancer
@@ -238,6 +279,18 @@ resource "aws_security_group_rule" "allow_elb_http_inbound" {
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
 }
+
+# Allows Load Balancer to accept requests from port 443 given any IP
+resource "aws_security_group_rule" "allow_elb_https_inbound" {
+  type              = "ingress"
+  security_group_id = aws_security_group.elb.id
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+
 
 # Allow outbound to anywhere
 resource "aws_security_group_rule" "allow_elb_all_outbound" {
@@ -266,23 +319,23 @@ resource "aws_elb" "classic_lb" {
 
   listener {
     instance_port     = 8080
-    instance_protocol = "http"
+    instance_protocol = "HTTP"
     lb_port           = 80
-    lb_protocol       = "http"
+    lb_protocol       = "HTTP"
   }
 
   listener {
     instance_port      = 8080
-    instance_protocol  = "http"
+    instance_protocol  = "HTTP"
     lb_port            = 443
-    lb_protocol        = "https"
+    lb_protocol        = "HTTPS"
     ssl_certificate_id = aws_acm_certificate.site_cert.arn
   }
 
   health_check {
     target              = "HTTP:8080/"
-    interval            = 15
-    timeout             = 3
+    interval            = 30
+    timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
