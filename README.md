@@ -68,8 +68,6 @@ Downloads associated providers we defined in the Terraform Block under `.terrafo
 
 Creates state file (`terraform.tfstate`), terraform's representation of the world, a JSON file containing information about every resource and data object. Also contains sensitive information such as DB passwords. Can be stored locally or remotely.
 
-> [TODO] Store remotely via HashiCorp in Terraform Cloud
-
 ---
 
 ### `terraform plan`
@@ -78,13 +76,13 @@ Takes Terraform Config (desired state) and compares it to Terraform State (actua
 
 ---
 
-### `terraform apply`
+### `terraform apply [-auto-approve]`
 
 This will take the plan and feed it to the provider which will figure out the sequence of api calls necessary to make these changes, implementing the plan.
 
 ---
 
-### `terraform destroy`
+### `terraform destroy [-auto-approve]`
 
 This will destroy the Terraform State, minimizes resources used.
 
@@ -215,9 +213,80 @@ The first line of a resource block declares a resource type and resource name. I
 
 ---
 
+## General - Terraform Variables & Outputs
+
+### <ins> Variable Types </ins>
+
+---
+
+#### <ins> _*Input Variables*_ </ins>
+
+- Code Example:
+  ```
+  variable "instance_type" {
+      description = "ec2 instance type"
+      type = string
+      default = "t2.micro"
+  }
+  ```
+- _Referenced by:_
+  ```
+  var.<name>
+  var.instance_type
+  ```
+
+---
+
+#### <ins>_*Local Variables*_</ins>
+
+- Code Example:
+
+  ```
+  locals {
+      service_name = "My Service"
+      owner = "DevOps Directive"
+  }
+  ```
+
+- _Referenced by:_
+  ```
+  local.<name>
+  local.service_name
+  ```
+
+---
+
+#### <ins> _*Output Variables*_</ins>
+
+- Code Example:
+
+  ```
+  output "instance_ip_addr" {
+      value = aws_instance.instance.public_ip
+  }
+  ```
+
+- These are like return values of the function, just a way to get specific data
+
+---
+
+---
+
+### <ins>Setting Input Variables </ins>
+
+- In order of precedence // lowest -> highest:
+  - Manual entry druing plan/apply
+  - Defautl value in declaration block
+  - `TF_VAR_<name>` environment variables
+  - `terraform.tfvars` file
+  - `*.auto.tfvars` file
+  - Command line -var or -var-file
+
+---
+
 ## General - Terraform Architecture:
 
-![Terraform Architecture](./TerraformArchitecture.png)
+![Terraform Architecture](/media/TerraformArchitecture.png)
 
 ---
 

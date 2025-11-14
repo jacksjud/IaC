@@ -18,17 +18,6 @@ terraform {
         }
     }
 
-    # # This part is commented out for initial 'boot', then uncommented
-    # # to use resources
-    # backend "s3" {
-
-    #     bucket = "amzn-s3-static-site-bucket"
-    #     key = "terraform.tfstate"
-    #     region = "us-west-2"
-    #     use_lockfile = true
-    #     encrypt = true
-    # }
-
     # Cloud is much easier to work with than using s3 and dynamodb
     # that we aren't even using, plus the weird shift from local to backend is just too weird
     cloud { 
@@ -58,6 +47,11 @@ provider "cloudflare" {
     api_token = var.cloudflare_api_token
 }
 
+variable "ip_addr" {
+    description = "Personal IP Address"
+    type = string
+    sensitive = true
+}
 
 #####################################################################
 #####################################################################
@@ -245,13 +239,14 @@ resource "aws_security_group_rule" "allow_http_inbound_from_elb" {
 }
 
 # Allow SSH from my IP (debugging only)
-resource "aws_security_group_rule" "allow_ssh_inbound" {
-    type = "ingress"
-    security_group_id = aws_security_group.instances.id
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
-}
+# resource "aws_security_group_rule" "allow_ssh_inbound" {
+#     type = "ingress"
+#     security_group_id = aws_security_group.instances.id
+#     from_port = 22
+#     to_port = 22
+#     protocol = "tcp"
+#     cidr_blocks = [var.ip_addr]
+# }
 
 # Allow all outbound (so. the instance can talk to the internet)
 resource "aws_security_group_rule" "allow_all_outbound" {
@@ -289,8 +284,6 @@ resource "aws_security_group_rule" "allow_elb_https_inbound" {
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
 }
-
-
 
 # Allow outbound to anywhere
 resource "aws_security_group_rule" "allow_elb_all_outbound" {
@@ -350,55 +343,16 @@ resource "aws_elb" "classic_lb" {
   }
 }
 
-#####################################################################
-#####################################################################
-#####################################################################
-# DNS setup, 
-
-# resource "aws_acm_certificate" "site_cert" {
-#   domain_name       = "judahrjackson.com"
-#   validation_method = "DNS"
-
-#   subject_alternative_names = ["www.judahrjackson.com"]
-
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
-
-# resource "aws_route53_record" "cert_validation" {
-#     # only needed if using Route53; skip this if Cloudflare is DNS
-#     # for_each = {
-#     #     for dvo in aws_acm_certificate.site_cert.domain_validation_options : dvo.domain_name => {
-#     #     name  = dvo.resource_record_name
-#     #     type  = dvo.resource_record_type
-#     #     value = dvo.resource_record_value
-#     #     }
-#     # }
-
-#     name    = each.value.name
-#     type    = each.value.type
-#     zone_id = aws_elb.classic_lb.zone_id
-#     records = [each.value.value]
-#     ttl     = 60
-# }
-
-# # Validate manually if using Cloudflare DNS
-# resource "aws_acm_certificate_validation" "site_cert_validation" {
-#   certificate_arn         = aws_acm_certificate.site_cert.arn
-#   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
-# }
-
-
 
 #####################################################################
 #####################################################################
 #####################################################################
-# TO BE DELETED
+# Debugging additioins
 
 # Currently provides the dns name for the classic loadbalancer, goal will
 # be to make it so Cloudflare will route our domain to the loadbalancer's dns
 # then AWS can take control (limiting Cloudflare dependency).
+
 output "elb_dns_name" {
     value =  aws_elb.classic_lb.dns_name
 }
