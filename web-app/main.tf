@@ -75,7 +75,7 @@ variable "cloudflare_zone_id" {
 }
 
 module "web_app_1" {
-    source = "git@github.com:jacksjud/"
+    source = "github.com/jacksjud/IaC//v2module?ref=main"
 
     # Input variables
 
@@ -86,7 +86,7 @@ module "web_app_1" {
 }
 
 module "web_app_2" {
-    source = "../v2module"
+    source = "github.com/jacksjud/IaC//v2module?ref=main"
 
     # Input variables
 

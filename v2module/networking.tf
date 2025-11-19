@@ -40,13 +40,13 @@ resource "aws_security_group_rule" "allow_http_inbound_from_elb" {
 }
 
 # Allow SSH from my IP (debugging only)
-resource "aws_security_group_rule" "allow_ssh_inbound" {
-    type = "ingress"
-    security_group_id = aws_security_group.instances.id
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
-}
+# resource "aws_security_group_rule" "allow_ssh_inbound" {
+#     type = "ingress"
+#     security_group_id = aws_security_group.instances.id
+#     from_port = 22
+#     to_port = 22
+#     protocol = "tcp"
+# }
 
 # Allow all outbound (so. the instance can talk to the internet)
 resource "aws_security_group_rule" "allow_all_outbound" {
