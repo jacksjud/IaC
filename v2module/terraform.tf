@@ -2,6 +2,7 @@
 #####################################################################
 #####################################################################
 # Terraform Block
+# When Modularized, best not to have this standard one throughout, leave it to whoever is using the module
 
 # Specifies providers
 terraform {
@@ -20,13 +21,13 @@ terraform {
 
     # Cloud is much easier to work with than using s3 and dynamodb
     # that we aren't even using, plus the weird shift from local to backend is just too weird
-    cloud { 
-        organization = "static-site" 
+    # cloud { 
+    #     organization = "static-site" 
 
-        workspaces { 
-            name = "static-site-portfolio" 
-        } 
-    } 
+    #     workspaces { 
+    #         name = "static-site-portfolio" 
+    #     } 
+    # } 
 
     required_version = ">=1.13"
 }

@@ -18,11 +18,30 @@ data "aws_ami" "amazon_linux_2" {
 
 #####################################################################
 # Amazon Instance for EC2
-resource "aws_instance" "web" {
+# resource "aws_instance" "web" {
+#     ami = var.ami == "" ? data.aws_ami.amazon_linux_2.id : var.ami
+#     instance_type = var.instance_type
+#     tags = {
+#         Name = "${var.app_name}-${var.env_name}-ec2-instance"
+#     }
+
+#     security_groups = [ aws_security_group.instances.name ]
+
+
+#     # To more easily SSH or EC2 Connect
+#     associate_public_ip_address = true
+
+#     # TEMP
+#     user_data = ""
+# }
+
+# AWS instances, still using free tier
+
+resource "aws_instance" "instance_1" {
     ami = var.ami == "" ? data.aws_ami.amazon_linux_2.id : var.ami
     instance_type = var.instance_type
     tags = {
-        Name = "${var.app_name}-${var.env_name}-ec2-instance"
+        Name = "${var.app_name}-${var.env_name}-ec2-instance_1"
     }
 
     security_groups = [ aws_security_group.instances.name ]
@@ -31,8 +50,43 @@ resource "aws_instance" "web" {
     # To more easily SSH or EC2 Connect
     associate_public_ip_address = true
 
-    # TEMP
-    user_data = ""
+    # Updated user_data because the Amazon Linux 2 uses bash that runs user_data once
+    # so if it fails for any reason (like not having Python), no service is listening
+    user_data = <<-EOF
+                #!/bin/bash
+                yum update -y
+                yum install -y python3
+                cd /home/ec2-user
+                echo "Hello, World 1" > index.html
+                nohup python3 -m http.server 8080 &
+                EOF
+
+
+}
+
+resource "aws_instance" "instance_2" {
+    ami = var.ami == "" ? data.aws_ami.amazon_linux_2.id : var.ami
+    instance_type = var.instance_type
+    tags = {
+        Name = "${var.app_name}-${var.env_name}-ec2-instance_2"
+    }
+
+    security_groups = [ aws_security_group.instances.name ]
+
+
+    # To more easily SSH or EC2 Connect
+    associate_public_ip_address = true
+
+    # Updated user_data because the Amazon Linux 2 uses bash that runs user_data once
+    # so if it fails for any reason (like not having Python), no service is listening
+    user_data = <<-EOF
+                #!/bin/bash
+                yum update -y
+                yum install -y python3
+                cd /home/ec2-user
+                echo "Hello, World 2" > index.html
+                nohup python3 -m http.server 8080 &
+                EOF
 }
 
 #####################################################################

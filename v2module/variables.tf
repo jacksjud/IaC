@@ -77,24 +77,24 @@ variable "cloudflare_zone_id" {
 #####################################################################
 # Database Variables
 
-variable "db_name" {
-    description = "Name of database instance"
-    type = string
-    default = ""
-}
+# variable "db_name" {
+#     description = "Name of database instance"
+#     type = string
+#     default = ""
+# }
 
-variable "db_user" {
-    description = "Username for database"
-    type = string
-    default = ""
-}
+# variable "db_user" {
+#     description = "Username for database"
+#     type = string
+#     default = ""
+# }
 
-variable "db_pass" {
-    description = "Password for database"
-    type = string
-    sensitive = true
-    default = ""
-}
+# variable "db_pass" {
+#     description = "Password for database"
+#     type = string
+#     sensitive = true
+#     default = ""
+# }
 
 
 
