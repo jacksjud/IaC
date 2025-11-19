@@ -93,7 +93,7 @@ resource "aws_instance" "instance_2" {
 # Classic Load Balancer (ELB)
 
 resource "aws_elb" "classic_lb" {
-  name               = "${var.app_name}-${var.env_name}-classic-web-elb"
+  name               = "${var.app_name}-${var.env_name}-celb"
   availability_zones = [ "us-west-2a", "us-west-2b", "us-west-2c" ]
   subnets            = data.aws_subnets.default_subnet.ids
   security_groups    = [aws_security_group.elb.id]
